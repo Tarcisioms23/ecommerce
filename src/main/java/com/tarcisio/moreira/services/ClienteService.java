@@ -17,11 +17,14 @@ import org.springframework.stereotype.Service;
 import com.tarcisio.moreira.domain.Cidade;
 import com.tarcisio.moreira.domain.Cliente;
 import com.tarcisio.moreira.domain.Endereco;
+import com.tarcisio.moreira.domain.enums.Perfil;
 import com.tarcisio.moreira.domain.enums.TipoCliente;
 import com.tarcisio.moreira.dto.ClienteDTO;
 import com.tarcisio.moreira.dto.ClienteNewDTO;
 import com.tarcisio.moreira.repositories.ClienteRepository;
 import com.tarcisio.moreira.repositories.EnderecoRepository;
+import com.tarcisio.moreira.security.UserSS;
+import com.tarcisio.moreira.services.exceptions.AuthorizationException;
 import com.tarcisio.moreira.services.exceptions.DataIntegrityException;
 import com.tarcisio.moreira.services.exceptions.ObjectNotFoundException;
 
@@ -40,6 +43,12 @@ public class ClienteService {
 	
 	
 	public Cliente find(Integer id) {
+		
+		UserSS user = UserService.authenticated();
+		if(user == null || !user.hasRole(Perfil.ADMIN) && (!id.equals(user.getId())))  {
+			throw  new AuthorizationException("Acesso negado");
+		}
+		
 		Optional<Cliente> obj = repo.findById(id);
 		return obj.orElseThrow(() -> new ObjectNotFoundException(
 		"Objeto não encontrado! Id: " + id + ", Tipo: " + Cliente.class.getName()));
